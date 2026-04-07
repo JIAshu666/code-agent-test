@@ -3,6 +3,8 @@
 
 # Node.js依赖
 node_modules/
+package.json
+pnpm-lock.yaml
 
 # 环境变量文件
 .env
