@@ -29,21 +29,57 @@ def main():
         # 5. Agent 内部思考与行动循环（因为模型可能要读文件然后再写文件，需要循环）
         while True:
             # 调用大模型
-            llm_response = call_llm(messages, tools_schema)
+            llm_response = call_llm(messages, tools_schema, stream=True)
+            
+            # 处理流式响应
+            full_response = None
+            tool_calls = []
+            
+            if hasattr(llm_response, '__iter__'):
+                # 流式输出
+                print("\nAgent: ", end="")
+                content = ""
+                for chunk in llm_response:
+                    # 处理内容块
+                    if chunk.choices[0].delta.content:
+                        print(chunk.choices[0].delta.content, end="", flush=True)
+                        content += chunk.choices[0].delta.content
+                    # 处理工具调用
+                    if chunk.choices[0].delta.tool_calls:
+                        tool_calls.extend(chunk.choices[0].delta.tool_calls)
+                print("\n")
+                
+                # 构建完整响应对象
+                class Message:
+                    def __init__(self, content, tool_calls):
+                        self.content = content
+                        self.tool_calls = tool_calls
+                        self.id = "streaming-message"
+                
+                # 为工具调用添加ID（如果没有）
+                for i, tool_call in enumerate(tool_calls):
+                    if not hasattr(tool_call, 'id'):
+                        tool_call.id = f"tool-call-{i}"
+                
+                full_response = Message(content, tool_calls)
+            else:
+                # 非流式输出（兼容旧版本）
+                full_response = llm_response
+                if not full_response.tool_calls:
+                    print(f"\nAgent: {full_response.content}\n")
             
             # 情况 A：模型决定不调用工具，直接回复了（说明任务结束或需要你提供更多信息）
-            if not llm_response.tool_calls:
-                print(f"\nAgent: {llm_response.content}\n")
+            if not full_response.tool_calls:
                 # 把模型的回复加入历史，跳出内部循环，等待用户下一次输入
-                messages.append(llm_response)
+                messages.append({"role": "assistant", "content": full_response.content})
                 break
             
             # 情况 B：模型决定调用工具（读文件或写文件）
             # 【关键】必须把模型“想要调用工具”的这个动作也记录进历史！
-            messages.append(llm_response)
+            messages.append({"role": "assistant", "tool_calls": full_response.tool_calls, "content": full_response.content})
 
             # 遍历模型想要调用的工具（通常一次只调一个）
-            for tool_call in llm_response.tool_calls:
+            for tool_call in full_response.tool_calls:
                 func_name = tool_call.function.name
                 # 解析模型传过来的参数（JSON字符串转字典）
                 func_args = json.loads(tool_call.function.arguments)

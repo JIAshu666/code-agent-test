@@ -12,15 +12,17 @@ client = OpenAI(
     base_url=os.getenv("BASE_URL")
 )
 
-def call_llm(messages: list, tools_schema: list = None):
+def call_llm(messages: list, tools_schema: list = None, stream: bool = False):
     """
     调用大模型
     :param messages: 对话历史
     :param tools_schema: 工具描述（传入时模型才会尝试调用工具）
+    :param stream: 是否使用流式输出
     """
     kwargs = {
         "model": os.getenv("MODEL_NAME"),
         "messages": messages,
+        "stream": stream,
     }
     
     # 如果传了工具描述，就加上
@@ -29,4 +31,7 @@ def call_llm(messages: list, tools_schema: list = None):
         kwargs["tool_choice"] = "auto" # 让模型自己决定用不用工具
     
     response = client.chat.completions.create(**kwargs)
-    return response.choices[0].message
+    if stream:
+        return response
+    else:
+        return response.choices[0].message
