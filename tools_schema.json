@@ -1,0 +1,60 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "create_venv",
+      "description": "在指定项目目录下使用 uv 创建 Python 虚拟环境（.venv）",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "项目目录的绝对路径" }
+        },
+        "required": ["path"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "install_deps",
+      "description": "在指定目录的虚拟环境中，使用 uv pip install 安装 Python 第三方依赖包",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "项目目录的绝对路径" },
+          "packages": { "type": "string", "description": "要安装的包名，多个包用空格隔开（如 'requests flask'），或者传 requirements.txt 文件路径（如 '-r requirements.txt'）" }
+        },
+        "required": ["path", "packages"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "read_file",
+      "description": "读取指定路径的文件内容",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "文件的绝对路径" }
+        },
+        "required": ["path"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "write_file",
+      "description": "将完整的代码内容写入指定路径的文件中",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "文件的绝对路径" },
+          "content": { "type": "string", "description": "要写入的完整代码内容" }
+        },
+        "required": ["path", "content"]
+      }
+    }
+  }
+]
